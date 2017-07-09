@@ -14,7 +14,7 @@ using std::vector;
  */
 UKF::UKF() {
     // if this is false, laser measurements will be ignored (except during init)
-    use_laser_ = false;
+    use_laser_ = true;
     
     // if this is false, radar measurements will be ignored (except during init)
     use_radar_ = true;
@@ -96,7 +96,10 @@ UKF::UKF() {
     cout << "weights: " << endl << weights_ <<endl;
     
     // lidar measurement covariance matrix
-    // MatrixXd R_lidr_;
+    R_lidr_ = MatrixXd(2, 2);
+    R_lidr_ << std_laspx_*std_laspx_, 0,
+               0, std_laspy_*std_laspy_;
+    cout << "R_lidr_: " << endl << R_lidr_ <<endl;
     
     // radar measurement covariance matrix
     R_radr_ = MatrixXd(3, 3);
@@ -222,8 +225,54 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
      You'll also need to calculate the lidar NIS.
      */
     
-//    VectorXd lidarMeasurementVector = VectorXd(2);
-//    lidarMeasurementVector << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1];
+    int n_z = 2;
+    
+    //create matrix for sigma points in measurement space
+    MatrixXd Zsig = MatrixXd(n_z, n_sigma_);
+    CreateLaserMeasurementSigmaPoints(&Zsig);
+    
+    //calculate mean predicted measurement
+    VectorXd z_pred = VectorXd(n_z);
+    z_pred = Zsig*weights_;
+    cout << "laser z_pred: " << endl << z_pred << endl;
+    
+    //calculate measurement covariance matrix S
+    MatrixXd S = MatrixXd(n_z, n_z);
+    S.fill(0);
+    for (int i=0; i<n_sigma_; i++)
+    {
+        VectorXd z_diff = Zsig.col(i) - z_pred;
+        S = S + weights_(i) * z_diff * z_diff.transpose();
+    }
+    S = S + R_lidr_;
+    
+    // measurement received
+    VectorXd z = VectorXd(n_z);
+    z << meas_package.raw_measurements_[0],
+         meas_package.raw_measurements_[1];
+    cout << "laser measurement point: " << endl << z << endl;
+    
+    //create matrix for cross correlation Tc
+    MatrixXd Tc = MatrixXd(n_x_, n_z);
+    Tc.fill(0);
+    for(int i=0; i<n_sigma_; i++)
+    {
+        VectorXd x_diff = Xsig_pred_.col(i) - x_;
+        
+        VectorXd z_diff = Zsig.col(i) - z_pred;
+        
+        Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+    }
+    
+    //calculate Kalman gain K
+    MatrixXd K = MatrixXd(n_x_, n_z);
+    K = Tc * S.inverse();
+    // std::cout << "K: " << std::endl << K << std::endl;
+    
+    //update state mean and covariance matrix
+    x_ = x_ + K * (z - z_pred);
+    
+    P_ = P_ - K * S * K.transpose();
 }
 
 /**
@@ -247,7 +296,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     //calculate mean predicted measurement
     VectorXd z_pred = VectorXd(n_z);
     z_pred = Zsig*weights_;
-    cout << "z_pred: " << endl << z_pred << endl;
+    cout << "radar z_pred: " << endl << z_pred << endl;
     
     //calculate measurement covariance matrix S
     MatrixXd S = MatrixXd(n_z, n_z);
@@ -266,7 +315,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     z << meas_package.raw_measurements_[0],
          meas_package.raw_measurements_[1],
          meas_package.raw_measurements_[2];
-    cout << "measurement point: " << endl << z << endl;
+    cout << "radar measurement point: " << endl << z << endl;
     
     //create matrix for cross correlation Tc
     MatrixXd Tc = MatrixXd(n_x_, n_z);
@@ -472,6 +521,27 @@ void UKF::CreateRadarMeasurementSigmaPoints(MatrixXd* Zsig_out) {
         angle,
         c2;
     }
-    cout << "predicted measurement sigma points: " << endl << Zsig << endl;
+    cout << "predicted measurement sigma points (radar): " << endl << Zsig << endl;
+    *Zsig_out = Zsig;
+}
+
+void UKF::CreateLaserMeasurementSigmaPoints(MatrixXd* Zsig_out) {
+    
+    int n_z = 2;
+    
+    //create matrix for sigma points in measurement space
+    MatrixXd Zsig = MatrixXd(n_z, n_sigma_);
+    Zsig.fill(0);
+    
+    //transform sigma points into measurement space
+    for (int i=0; i<n_sigma_; i++)
+    {
+        double px = Xsig_pred_.col(i)(0);
+        double py = Xsig_pred_.col(i)(1);
+        
+        Zsig.col(i) << px,
+                       py;
+    }
+    cout << "predicted measurement sigma points (laser): " << endl << Zsig << endl;
     *Zsig_out = Zsig;
 }

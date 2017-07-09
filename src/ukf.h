@@ -148,6 +148,11 @@ private:
      * Used to transform predicted sigma points to RADAR measurement space
      */
     void CreateRadarMeasurementSigmaPoints(MatrixXd* Zsig_out);
+    
+    /**
+     * Used to transform predicted sigma points to LASER measurement space
+     */
+    void CreateLaserMeasurementSigmaPoints(MatrixXd* Zsig_out);
 };
 
 #endif /* UKF_H */
