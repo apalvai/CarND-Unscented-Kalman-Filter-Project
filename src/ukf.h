@@ -143,6 +143,11 @@ private:
      * Used to compute state mean and coveraince based on predicted sigma points
      */
     void PredictStateMeanAndCovariance();
+    
+    /**
+     * Used to transform predicted sigma points to RADAR measurement space
+     */
+    void CreateRadarMeasurementSigmaPoints(MatrixXd* Zsig_out);
 };
 
 #endif /* UKF_H */

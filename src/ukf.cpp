@@ -242,41 +242,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     
     //create matrix for sigma points in measurement space
     MatrixXd Zsig = MatrixXd(n_z, n_sigma_);
-    Zsig.fill(0);
-    
-    //transform sigma points into measurement space
-    for (int i=0; i<n_sigma_; i++)
-    {
-        VectorXd col = Xsig_pred_.col(i);
-        
-        double px = col(0);
-        double py = col(1);
-        double v  = col(2);
-        double si = col(3);
-        double c1 = sqrt(px*px + py*py);
-        
-        if (abs(px) < 0.0001)
-        {
-            std::cout << "ERROR:" << "px: " << px << std::endl;
-            continue;
-        }
-        
-        if (abs(c1) < 0.0001)
-        {
-            std::cout << "ERROR: " << "px: " << px << "py: " << py << std::endl;
-            continue;
-        }
-        
-        double angle = atan2(py, px);
-        angle = fmod(angle, 2*M_PI);
-        
-        double c2 = (px*cos(si)+py*sin(si))*v/c1;
-        
-        Zsig.col(i) << c1,
-                       angle,
-                       c2;
-    }
-    cout << "predicted measurement sigma points: " << endl << Zsig << endl;
+    CreateRadarMeasurementSigmaPoints(&Zsig);
     
     //calculate mean predicted measurement
     VectorXd z_pred = VectorXd(n_z);
@@ -464,4 +430,48 @@ void UKF::PredictStateMeanAndCovariance() {
     }
     
     P_ = X_diff_w * X_diff.transpose();
+}
+
+void UKF::CreateRadarMeasurementSigmaPoints(MatrixXd* Zsig_out) {
+    
+    int n_z = 3;
+    
+    //create matrix for sigma points in measurement space
+    MatrixXd Zsig = MatrixXd(n_z, n_sigma_);
+    Zsig.fill(0);
+    
+    //transform sigma points into measurement space
+    for (int i=0; i<n_sigma_; i++)
+    {
+        VectorXd col = Xsig_pred_.col(i);
+        
+        double px = col(0);
+        double py = col(1);
+        double v  = col(2);
+        double si = col(3);
+        double c1 = sqrt(px*px + py*py);
+        
+        if (abs(px) < 0.0001)
+        {
+            std::cout << "ERROR:" << "px: " << px << std::endl;
+            continue;
+        }
+        
+        if (abs(c1) < 0.0001)
+        {
+            std::cout << "ERROR: " << "px: " << px << "py: " << py << std::endl;
+            continue;
+        }
+        
+        double angle = atan2(py, px);
+        angle = fmod(angle, 2*M_PI);
+        
+        double c2 = (px*cos(si)+py*sin(si))*v/c1;
+        
+        Zsig.col(i) << c1,
+        angle,
+        c2;
+    }
+    cout << "predicted measurement sigma points: " << endl << Zsig << endl;
+    *Zsig_out = Zsig;
 }
