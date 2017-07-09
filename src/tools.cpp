@@ -69,3 +69,7 @@ VectorXd Tools::ConvertRadarMeasurementToUKFStateVector(const VectorXd& x_radar)
     
     return x_ukf;
 }
+
+double Tools::CalculateNIS(VectorXd z_diff, MatrixXd S) {
+    return z_diff.transpose() * S.inverse() * z_diff;
+}

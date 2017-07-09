@@ -129,6 +129,12 @@ private:
     // tools
     Tools tools;
     
+    // NIS_lidr_
+    double NIS_lidr_;
+    
+    // NIS_radr_
+    double NIS_radr_;
+    
     /**
      * Used to generate Sigma points including process noise
      */

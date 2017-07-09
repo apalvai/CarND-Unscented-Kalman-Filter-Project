@@ -28,6 +28,11 @@ public:
      * A helper method to convert polar coordinates to cartesian coordinates.
      */
     VectorXd ConvertRadarMeasurementToUKFStateVector(const VectorXd& x_polar);
+    
+    /**
+     * A helper method to calculate NIS.
+     */
+    double CalculateNIS(VectorXd z_diff, MatrixXd S);
 };
 
 #endif /* TOOLS_H_ */
