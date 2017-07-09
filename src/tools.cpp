@@ -48,6 +48,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 VectorXd Tools::ConvertRadarMeasurementToUKFStateVector(const VectorXd& x_radar) {
     
     VectorXd x_ukf(5);
+    x_ukf.fill(0);
     
     std::cout << "x_radar: " << std::endl << x_radar << std::endl;
     

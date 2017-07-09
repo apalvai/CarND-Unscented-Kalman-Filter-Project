@@ -118,6 +118,8 @@ private:
     // Sigma point spreading parameter for augmented
     double lambda_aug_;
     
+    int n_sigma_;
+    
     // lidar measurement covariance matrix
     MatrixXd R_lidr_;
     
@@ -131,6 +133,16 @@ private:
      * Used to generate Sigma points including process noise
      */
     void AugmentedSigmaPoints(MatrixXd* Xsig_out);
+    
+    /**
+     * Used to apply CTRV transformation for predicting sigma points through state transition
+     */
+    void ApplyCTRVTransform(double delta_t);
+    
+    /**
+     * Used to compute state mean and coveraince based on predicted sigma points
+     */
+    void PredictStateMeanAndCovariance();
 };
 
 #endif /* UKF_H */
